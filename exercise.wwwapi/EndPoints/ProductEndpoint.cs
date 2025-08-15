@@ -1,6 +1,7 @@
 ﻿using exercise.wwwapi.DTOs;
 using exercise.wwwapi.Repository;
 using Microsoft.AspNetCore.Mvc;
+using System.Buffers.Text;
 using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
@@ -11,11 +12,10 @@ namespace exercise.wwwapi.EndPoints
 {
     public static class ProductEndpoint
     {
-        private readonly static string url = "https://localhost:7188/products/";
-
+        private static readonly string subdomain = "products";
         public static void ConfigureProduct(this WebApplication app)
         {
-            var products = app.MapGroup("products");
+            var products = app.MapGroup(subdomain);
 
             products.MapGet("/", GetProducts);
             products.MapGet("/{id}", GetProductById);
@@ -57,7 +57,7 @@ namespace exercise.wwwapi.EndPoints
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public static async Task<IResult> AddProduct(HttpRequest request, IRepository repository)
+        public static async Task<IResult> AddProduct(HttpRequest request, HttpContext context, IRepository repository)
         {
             ProductPost? model;
             try
@@ -78,13 +78,14 @@ namespace exercise.wwwapi.EndPoints
 
             var addedEntity = await repository.AddAsync(model);
 
-            return TypedResults.Created(url + $"{addedEntity.Id}");
+            var url = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}/{addedEntity.Id}";
+            return TypedResults.Created(url);
         }
 
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> UpdateProduct(HttpRequest request, IRepository repository, int id)
+        public static async Task<IResult> UpdateProduct(HttpRequest request, HttpContext context, IRepository repository, int id)
         {
             ProductPut? model;
             try
@@ -113,7 +114,8 @@ namespace exercise.wwwapi.EndPoints
 
             var updatedEntity = await repository.UpdateAsync(id, entity);
 
-            return TypedResults.Created(url + $"{updatedEntity.Id}");
+            var url = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}";
+            return TypedResults.Created(url);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
