@@ -10,5 +10,7 @@ namespace exercise.wwwapi.Repository
         Task<Product> AddAsync(ProductPost product);
         Task<Product> DeleteAsync(int id);
         Task<Product> UpdateAsync(int id, Product model);
+
+        Task<Product> NameExistsAsync(string name);
     }
 }

@@ -56,5 +56,11 @@ namespace exercise.wwwapi.Repository
             await _db.SaveChangesAsync();
             return toRemove;
         }
+
+        public async Task<Product> NameExistsAsync(string name)
+        {
+            var entity = await _db.Products.Where(p => p.Name == name).FirstOrDefaultAsync();
+            return entity;
+        }
     }
 }

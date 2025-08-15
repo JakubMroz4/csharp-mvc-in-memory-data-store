@@ -1,8 +1,10 @@
 ﻿using exercise.wwwapi.DTOs;
 using exercise.wwwapi.Repository;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace exercise.wwwapi.EndPoints
@@ -15,7 +17,7 @@ namespace exercise.wwwapi.EndPoints
 
             products.MapGet("/", GetProducts);
             products.MapGet("/{id}", GetProductById);
-            products.MapPost("/", AddProduct);
+            products.MapPost("/", AddProduct).Accepts<ProductPost>("application/json");
             products.MapPut("/{id}", UpdateProduct);
             products.MapDelete("/{id}", DeleteProduct);
         }
@@ -38,8 +40,27 @@ namespace exercise.wwwapi.EndPoints
             return TypedResults.Ok(target);
         }
 
-        public static async Task<IResult> AddProduct(IRepository repository, ProductPost model)
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public static async Task<IResult> AddProduct(HttpRequest request, IRepository repository)
         {
+            ProductPost? model;
+            try
+            {
+                model = await request.ReadFromJsonAsync<ProductPost>();
+            }
+            catch (JsonException ex)
+            {
+                return Results.BadRequest($"Price must be a number, something else was provided");
+            }
+
+
+            var existingEntity = await repository.NameExistsAsync(model.Name);
+            if (existingEntity is not null)
+            {
+                return TypedResults.BadRequest("Product with provided name already exists.");
+            }
+
             var addedEntity = await repository.AddAsync(model);
 
             return TypedResults.Ok(addedEntity);
