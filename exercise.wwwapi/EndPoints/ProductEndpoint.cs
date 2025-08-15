@@ -13,6 +13,11 @@ namespace exercise.wwwapi.EndPoints
     public static class ProductEndpoint
     {
         private static readonly string subdomain = "products";
+        private static readonly string notFoundErrorText = "Product not found.";
+        private static readonly string productsInCategoryNotFoundErrorText = "Product not found.";
+        private static readonly string priceMustBeIntegerErrorText = "Price must be an integer, something else was provided.";
+        private static readonly string nameExistsErrorText = "Product with provided name already exists.";
+
         public static void ConfigureProduct(this WebApplication app)
         {
             var products = app.MapGroup(subdomain);
@@ -37,7 +42,7 @@ namespace exercise.wwwapi.EndPoints
 
             if (results.Count() == 0)
             {
-                return TypedResults.NotFound("No Product of the provided category was found");
+                return TypedResults.NotFound(productsInCategoryNotFoundErrorText);
             }
 
             return TypedResults.Ok(results);
@@ -50,7 +55,7 @@ namespace exercise.wwwapi.EndPoints
             var target = await repository.GetByIdAsync(id);
 
             if (target is null)
-                return TypedResults.NotFound();
+                return TypedResults.NotFound(notFoundErrorText);
 
             return TypedResults.Ok(target);
         }
@@ -66,14 +71,14 @@ namespace exercise.wwwapi.EndPoints
             }
             catch (JsonException ex)
             {
-                return Results.BadRequest($"Price must be a number, something else was provided");
+                return Results.BadRequest(priceMustBeIntegerErrorText);
             }
 
 
             var existingEntity = await repository.NameExistsAsync(model.Name);
             if (existingEntity is not null)
             {
-                return TypedResults.BadRequest("Product with provided name already exists.");
+                return TypedResults.BadRequest(nameExistsErrorText);
             }
 
             var addedEntity = await repository.AddAsync(model);
@@ -94,19 +99,19 @@ namespace exercise.wwwapi.EndPoints
             }
             catch (JsonException ex)
             {
-                return Results.BadRequest($"Price must be a number, something else was provided");
-            }
-
-            var existingEntity = await repository.NameExistsAsync(model.Name);
-            if (existingEntity is not null && existingEntity.Id != id)
-            {
-                return TypedResults.BadRequest("Product with provided name already exists.");
+                return Results.BadRequest(priceMustBeIntegerErrorText);
             }
 
             var entity = await repository.GetByIdAsync(id);
 
             if (entity is null)
-                return TypedResults.NotFound();
+                return TypedResults.NotFound(notFoundErrorText);
+
+            var existingEntity = await repository.NameExistsAsync(model.Name);
+            if (existingEntity is not null && existingEntity.Id != id)
+            {
+                return TypedResults.BadRequest(nameExistsErrorText);
+            }
 
             if (model.Name is not null) entity.Name = model.Name;
             if (model.Category is not null) entity.Category = model.Category;
@@ -125,7 +130,7 @@ namespace exercise.wwwapi.EndPoints
             var deletedEntity = await repository.DeleteAsync(id);
 
             if (deletedEntity is null)
-                return TypedResults.NotFound();
+                return TypedResults.NotFound(notFoundErrorText);
 
             return TypedResults.Ok(deletedEntity);
         }
