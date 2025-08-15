@@ -11,7 +11,7 @@ namespace exercise.wwwapi.EndPoints
 {
     public static class ProductEndpoint
     {
-        public static string url = "https://localhost:7188/products/";
+        private readonly static string url = "https://localhost:7188/products/";
 
         public static void ConfigureProduct(this WebApplication app)
         {
