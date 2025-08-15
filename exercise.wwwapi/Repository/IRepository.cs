@@ -6,6 +6,7 @@ namespace exercise.wwwapi.Repository
     public interface IRepository
     {
         Task<List<Product>> GetProductsAsync();
+        Task<List<Product>> GetProductsByCategoryAsync(string category);
         Task<Product> GetByIdAsync(int id);
         Task<Product> AddAsync(ProductPost product);
         Task<Product> DeleteAsync(int id);

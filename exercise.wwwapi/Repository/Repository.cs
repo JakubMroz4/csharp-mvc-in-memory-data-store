@@ -19,6 +19,11 @@ namespace exercise.wwwapi.Repository
             return await _db.Products.ToListAsync();
         }
 
+        public async Task<List<Product>> GetProductsByCategoryAsync(string category)
+        {
+            return await _db.Products.Where(p => p.Category == category).ToListAsync();
+        }
+
         public async Task<Product> GetByIdAsync(int id)
         {
             return await _db.Products.FindAsync(id);

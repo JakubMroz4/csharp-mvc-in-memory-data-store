@@ -23,9 +23,21 @@ namespace exercise.wwwapi.EndPoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public static async Task<IResult> GetProducts(IRepository repository)
+        public static async Task<IResult> GetProducts(IRepository repository, string? category)
         {
-            return TypedResults.Ok(await repository.GetProductsAsync());
+            if (category is null)
+            {
+                return TypedResults.Ok(await repository.GetProductsAsync());
+            }
+
+            var results = await repository.GetProductsByCategoryAsync(category);
+
+            if (results.Count() == 0)
+            {
+                return TypedResults.NotFound("No Product of the provided category was found");
+            }
+
+            return TypedResults.Ok(results);
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
