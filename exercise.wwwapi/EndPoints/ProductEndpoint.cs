@@ -18,7 +18,7 @@ namespace exercise.wwwapi.EndPoints
             products.MapGet("/", GetProducts);
             products.MapGet("/{id}", GetProductById);
             products.MapPost("/", AddProduct).Accepts<ProductPost>("application/json");
-            products.MapPut("/{id}", UpdateProduct);
+            products.MapPut("/{id}", UpdateProduct).Accepts<ProductPut>("application/json");
             products.MapDelete("/{id}", DeleteProduct);
         }
 
@@ -80,8 +80,24 @@ namespace exercise.wwwapi.EndPoints
 
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public static async Task<IResult> UpdateProduct(IRepository repository, int id, ProductPut model)
+        public static async Task<IResult> UpdateProduct(HttpRequest request, IRepository repository, int id)
         {
+            ProductPut? model;
+            try
+            {
+                model = await request.ReadFromJsonAsync<ProductPut>();
+            }
+            catch (JsonException ex)
+            {
+                return Results.BadRequest($"Price must be a number, something else was provided");
+            }
+
+            var existingEntity = await repository.NameExistsAsync(model.Name);
+            if (existingEntity is not null)
+            {
+                return TypedResults.BadRequest("Product with provided name already exists.");
+            }
+
             var entity = await repository.GetByIdAsync(id);
 
             if (entity is null)
