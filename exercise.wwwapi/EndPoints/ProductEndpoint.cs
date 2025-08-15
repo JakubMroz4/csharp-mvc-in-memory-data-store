@@ -11,6 +11,8 @@ namespace exercise.wwwapi.EndPoints
 {
     public static class ProductEndpoint
     {
+        public static string url = "https://localhost:7188/products/";
+
         public static void ConfigureProduct(this WebApplication app)
         {
             var products = app.MapGroup("products");
@@ -23,6 +25,7 @@ namespace exercise.wwwapi.EndPoints
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> GetProducts(IRepository repository, string? category)
         {
             if (category is null)
@@ -52,7 +55,7 @@ namespace exercise.wwwapi.EndPoints
             return TypedResults.Ok(target);
         }
 
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public static async Task<IResult> AddProduct(HttpRequest request, IRepository repository)
         {
@@ -75,10 +78,11 @@ namespace exercise.wwwapi.EndPoints
 
             var addedEntity = await repository.AddAsync(model);
 
-            return TypedResults.Ok(addedEntity);
+            return TypedResults.Created(url + $"{addedEntity.Id}");
         }
 
-        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public static async Task<IResult> UpdateProduct(HttpRequest request, IRepository repository, int id)
         {
@@ -93,7 +97,7 @@ namespace exercise.wwwapi.EndPoints
             }
 
             var existingEntity = await repository.NameExistsAsync(model.Name);
-            if (existingEntity is not null)
+            if (existingEntity is not null && existingEntity.Id != id)
             {
                 return TypedResults.BadRequest("Product with provided name already exists.");
             }
@@ -109,7 +113,7 @@ namespace exercise.wwwapi.EndPoints
 
             var updatedEntity = await repository.UpdateAsync(id, entity);
 
-            return TypedResults.Ok(updatedEntity);
+            return TypedResults.Created(url + $"{updatedEntity.Id}");
         }
 
         [ProducesResponseType(StatusCodes.Status200OK)]
